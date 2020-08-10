@@ -1,0 +1,25 @@
+Fake upload directory.
+
+If no upload directory, "pio run --target upload" fails with following error message.
+
+```
+$ pio run --target upload -e native
+Warning! Ignore unknown configuration option `target` in section [env:native]
+Processing native (platform: native)
+--------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+LDF: Library Dependency Finder -> http://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 0 compatible libraries
+Scanning dependencies...
+No dependencies
+Building in release mode
+*** Do not know how to make File target `upload' (/Users/yoshitake/workspace/myhome/arduinoesp32_awsiot/upload).  Stop.
+============================ [FAILED] Took 0.45 seconds ========================
+
+Environment    Status    Duration
+-------------  --------  ------------
+nodemcu-32s    IGNORED
+native         FAILED    00:00:00.454
+==================== 1 failed, 0 succeeded in 00:00:00.454 =====================
+```
