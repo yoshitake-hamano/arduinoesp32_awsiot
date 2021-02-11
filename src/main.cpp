@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <AWS_IOT.h>
 #include <Adafruit_NeoPixel.h>
 
 #include <log/Log.h>
@@ -14,9 +15,23 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_OF_NEO_PIXELS,
                                              NEO_PIXEL_PIN,
                                              NEO_GRB + NEO_KHZ800);
 
-const uint32_t BLACK_COLOR      = Adafruit_NeoPixel::Color(0, 0, 0);
-const uint32_t ERROR_COLOR      = Adafruit_NeoPixel::Color(255, 0, 0);
-const uint32_t WAITING_COLOR    = Adafruit_NeoPixel::Color(255, 255, 51);
+const uint32_t BLACK_COLOR   = Adafruit_NeoPixel::Color(0,     0,  0);
+const uint32_t ERROR_COLOR   = Adafruit_NeoPixel::Color(255,   0,  0);
+const uint32_t WAITING_COLOR = Adafruit_NeoPixel::Color(255, 255, 51);
+const uint32_t ACTIVE_COLOR  = Adafruit_NeoPixel::Color(0,   255, 51);
+
+AWS_IOT hornbill;
+
+volatile int  msgReceived = 0;
+char payload[512];
+char rcvdPayload[512];
+
+void mySubCallBackHandler(char *topicName, int payloadLen, char *payLoad)
+{
+    strncpy(rcvdPayload, payLoad, payloadLen);
+    rcvdPayload[payloadLen] = 0;
+    msgReceived = 1;
+}
 
 static void showError(int times)
 {
@@ -83,6 +98,23 @@ static void reconnectWifi()
     Log::Info(log.c_str());
 }
 
+static void reconnectAndSubscribeAwsIot()
+{
+    Log::Info("AWS IoT connecting...");
+    if (hornbill.connect(HOST_ADDRESS, CLIENT_ID,
+                         AWS_ROOT_CA_PEM, CERTIFICATE_PEM_CRT, PRIVATE_PEM_KEY) != 0) {
+        Log::Error("Fails to connect AWS IoT.");
+    }
+    Log::Info("AWS IoT connected.");
+
+    delay(1000);
+    if (hornbill.subscribe(TOPIC_NAME,mySubCallBackHandler) != 0) {
+        Log::Error("Fails to subscribe AWS IoT.");
+    }
+
+    delay(2000);
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -93,20 +125,42 @@ void setup()
     pixels.setBrightness(255);
 
     reconnectWifi();
+    reconnectAndSubscribeAwsIot();
 }
 
 void loop()
 {
+    if(msgReceived == 1) {
+        msgReceived = 0;
+        Log::Info("Received Message:");
+        Log::Info(rcvdPayload);
+    }
+
+    static int sec = 0;
+    static int msgCount = 0;
+    ++sec;
+    if (sec >= 60) {
+        sec = 0;
+
+        sprintf(payload,"Hello from hornbill ESP32 : %d",msgCount++);
+        if (hornbill.publish(TOPIC_NAME, payload) != 0) {
+            Log::Error("Fails to publish AWS IoT.");
+            showError(5);
+        } else {
+            Log::Info("Published.");
+        }
+    }
+
     digitalWrite(LED_PIN, HIGH);
     for (int i=0; i<NUM_OF_NEO_PIXELS; i++) {
-        pixels.setPixelColor(i, 255, 0, 0);
+        pixels.setPixelColor(i, ACTIVE_COLOR);
     }
     pixels.show();
     delay(500);
 
     digitalWrite(LED_PIN, LOW);
     for (int i=0; i<NUM_OF_NEO_PIXELS; i++) {
-        pixels.setPixelColor(i, 0, 0, 0);
+        pixels.setPixelColor(i, BLACK_COLOR);
     }
     pixels.show();
     delay(500);
