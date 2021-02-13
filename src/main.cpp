@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <esp_log.h>
 #include <AWS_IOT.h>
 #include <Adafruit_NeoPixel.h>
 
@@ -100,6 +101,15 @@ static void reconnectWifi()
 
 static void reconnectAndSubscribeAwsIot()
 {
+#if 0 // for debug
+    // platformio.ini
+    // build_flags = -DENABLE_IOT_TRACE -DLOG_LOCAL_LEVEL=ESP_LOG_VERBOSE
+
+    esp_log_level_set("AWS_IOT",   ESP_LOG_VERBOSE);
+    esp_log_level_set("aws_iot",   ESP_LOG_VERBOSE);
+    esp_log_level_set("aws_timer", ESP_LOG_VERBOSE);
+#endif
+
     Log::Info("AWS IoT connecting...");
     if (hornbill.connect(HOST_ADDRESS, CLIENT_ID,
                          AWS_ROOT_CA_PEM, CERTIFICATE_PEM_CRT, PRIVATE_PEM_KEY) != 0) {
@@ -108,7 +118,7 @@ static void reconnectAndSubscribeAwsIot()
     Log::Info("AWS IoT connected.");
 
     delay(1000);
-    if (hornbill.subscribe(TOPIC_NAME,mySubCallBackHandler) != 0) {
+    if (hornbill.subscribe(TOPIC_NAME, mySubCallBackHandler) != 0) {
         Log::Error("Fails to subscribe AWS IoT.");
     }
 
@@ -118,7 +128,7 @@ static void reconnectAndSubscribeAwsIot()
 void setup()
 {
     Serial.begin(115200);
-    Serial.println("Hello ESP32 World!");
+    Log::Info("Hello ESP32 World!");
     pinMode(LED_PIN, OUTPUT);
 
     pixels.begin();
