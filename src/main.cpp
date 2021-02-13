@@ -115,13 +115,12 @@ static void reconnectAndSubscribeAwsIot()
                          AWS_ROOT_CA_PEM, CERTIFICATE_PEM_CRT, PRIVATE_PEM_KEY) != 0) {
         Log::Error("Fails to connect AWS IoT.");
     }
-    Log::Info("AWS IoT connected.");
 
     delay(1000);
+    Log::Info("AWS IoT subscribe.");
     if (hornbill.subscribe(TOPIC_NAME, mySubCallBackHandler) != 0) {
         Log::Error("Fails to subscribe AWS IoT.");
     }
-    Log::Info("AWS IoT subscribed.");
 
     delay(2000);
 }
@@ -143,22 +142,25 @@ void loop()
 {
     if(msgReceived == 1) {
         msgReceived = 0;
-        Log::Info("Received Message:");
+        Log::Info("AWS IoT received message:");
         Log::Info(rcvdPayload);
     }
 
     static int sec = 0;
-    static int msgCount = 0;
-    ++sec;
     if (sec >= 300) {
         sec = 0;
-
-        sprintf(payload,"Hello from hornbill ESP32 : %d",msgCount++);
+    }
+    if (sec++ == 0) {
+        uint8_t baseMac[6];
+        esp_read_mac(baseMac, ESP_MAC_WIFI_STA);
+        sprintf(payload, "{id: %02X%02X%02X%02X%02X%02X, temperature: %f}",
+                baseMac[0], baseMac[1], baseMac[2], baseMac[3], baseMac[4], baseMac[5],
+                temperatureRead());
+        Log::Info("AWS IoT publish:");
+        Log::Info(payload);
         if (hornbill.publish(TOPIC_NAME, payload) != 0) {
             Log::Error("Fails to publish AWS IoT.");
             showError(5);
-        } else {
-            Log::Info("Published.");
         }
     }
 
