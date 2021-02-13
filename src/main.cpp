@@ -121,6 +121,7 @@ static void reconnectAndSubscribeAwsIot()
     if (hornbill.subscribe(TOPIC_NAME, mySubCallBackHandler) != 0) {
         Log::Error("Fails to subscribe AWS IoT.");
     }
+    Log::Info("AWS IoT subscribed.");
 
     delay(2000);
 }
@@ -128,7 +129,7 @@ static void reconnectAndSubscribeAwsIot()
 void setup()
 {
     Serial.begin(115200);
-    Log::Info("Hello ESP32 World!");
+    Log::Info("Start ESP32.");
     pinMode(LED_PIN, OUTPUT);
 
     pixels.begin();
@@ -149,7 +150,7 @@ void loop()
     static int sec = 0;
     static int msgCount = 0;
     ++sec;
-    if (sec >= 60) {
+    if (sec >= 300) {
         sec = 0;
 
         sprintf(payload,"Hello from hornbill ESP32 : %d",msgCount++);
