@@ -117,10 +117,11 @@ static void reconnectAndSubscribeAwsIot()
     }
 
     delay(1000);
-    Log::Info("AWS IoT subscribe.");
-    if (hornbill.subscribe(TOPIC_NAME, mySubCallBackHandler) != 0) {
-        Log::Error("Fails to subscribe AWS IoT.");
-    }
+    // Log::Info("AWS IoT subscribe.");
+    // Log::Info(TOPIC_NAME);
+    // if (hornbill.subscribe(TOPIC_NAME, mySubCallBackHandler) != 0) {
+    //     Log::Error("Fails to subscribe AWS IoT.");
+    // }
 
     delay(2000);
 }
@@ -147,16 +148,17 @@ void loop()
     }
 
     static int sec = 0;
-    if (sec >= 300) {
+    if (sec >= (60 * 30)) {
         sec = 0;
     }
     if (sec++ == 0) {
         uint8_t baseMac[6];
         esp_read_mac(baseMac, ESP_MAC_WIFI_STA);
-        sprintf(payload, "{id: %02X%02X%02X%02X%02X%02X, temperature: %f}",
+        sprintf(payload, "{\"id\": \"%02X%02X%02X%02X%02X%02X\", \"temperature\": %f}",
                 baseMac[0], baseMac[1], baseMac[2], baseMac[3], baseMac[4], baseMac[5],
                 temperatureRead());
         Log::Info("AWS IoT publish:");
+        Log::Info(TOPIC_NAME);
         Log::Info(payload);
         if (hornbill.publish(TOPIC_NAME, payload) != 0) {
             Log::Error("Fails to publish AWS IoT.");
