@@ -1,12 +1,17 @@
 #include <Arduino.h>
 #include <WiFi.h>
-
+#include <DHTesp.h>
 #include <log/Log.h>
+
 #include "Config.h"
 
-const int LED_PIN            = 2;
+DHTesp dht;
+const int DHT_PIN = 32;
+const int LED_PIN = 2;
+
 const int HIGH_INTERVAL_MS   = 250;
 const int NORMAL_INTERVAL_MS = 500;
+const int LOW_INTERVAL_MS    = 1000;
 
 static void showConnectingWifi()
 {
@@ -40,11 +45,11 @@ static void reconnectWifi()
 
 void setup()
 {
-    pinMode(LED_PIN, OUTPUT);
-
     Serial.begin(115200);
     Log::Info("Hello ESP32 World!");
     reconnectWifi();
+
+    dht.setup(DHT_PIN, DHTesp::DHT11);
 }
 
 void loop()
@@ -53,4 +58,14 @@ void loop()
     delay(NORMAL_INTERVAL_MS);
     digitalWrite(LED_PIN, LOW);
     delay(NORMAL_INTERVAL_MS);
+
+    TempAndHumidity newValues = dht.getTempAndHumidity();
+    if (dht.getStatus() != 0) {
+        Serial.println("DHT11 error status: " + String(dht.getStatusString()));
+    }
+    float temp = newValues.temperature;
+    float hemi = newValues.humidity;
+    String msg = String(temp) + String(" ") + String(hemi);
+    Log::Info(msg.c_str());
+    delay(LOW_INTERVAL_MS);
 }
