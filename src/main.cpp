@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <DHTesp.h>
+#include <Ambient.h>
 #include <log/Log.h>
 
 #include "Config.h"
@@ -11,7 +12,10 @@ const int LED_PIN = 2;
 
 const int HIGH_INTERVAL_MS   = 250;
 const int NORMAL_INTERVAL_MS = 500;
-const int LOW_INTERVAL_MS    = 1000;
+const int LOW_INTERVAL_MS    = 60000;
+
+WiFiClient client;
+Ambient ambient;
 
 static void showConnectingWifi()
 {
@@ -50,6 +54,7 @@ void setup()
     reconnectWifi();
 
     dht.setup(DHT_PIN, DHTesp::DHT11);
+    ambient.begin(AMBIENT_CHANNEL_ID, AMBIENT_WRITE_KEY, &client);
 }
 
 void loop()
@@ -67,5 +72,8 @@ void loop()
     float hemi = newValues.humidity;
     String msg = String(temp) + String(" ") + String(hemi);
     Log::Info(msg.c_str());
+    ambient.set(1, temp);
+    ambient.set(2, hemi);
+    ambient.send();
     delay(LOW_INTERVAL_MS);
 }

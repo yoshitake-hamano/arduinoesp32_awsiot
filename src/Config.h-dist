@@ -3,3 +3,6 @@
 
 const char *SSID = "change me";
 const char *PASS = "change me";
+
+const int   AMBIENT_CHANNEL_ID = change me;
+const char *AMBIENT_WRITE_KEY  = "change me";
