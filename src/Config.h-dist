@@ -1,0 +1,5 @@
+
+#pragma once
+
+const char *SSID = "change me";
+const char *PASS = "change me";
