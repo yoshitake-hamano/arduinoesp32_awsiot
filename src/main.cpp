@@ -1,14 +1,13 @@
 #include <Arduino.h>
 #include <WiFi.h>
-#include <DHTesp.h>
 #include <Ambient.h>
 #include <log/Log.h>
 
 #include "Config.h"
 
-DHTesp dht;
-const int DHT_PIN = 32;
 const int LED_PIN = 2;
+
+const int ANALOG_PIN = 34;
 
 const int HIGH_INTERVAL_MS   = 250;
 const int NORMAL_INTERVAL_MS = 500;
@@ -47,33 +46,70 @@ static void reconnectWifi()
     Log::Info(log.c_str());
 }
 
+void printVolume(int v)
+{
+    double t = micros();
+    Serial.print(t/1000000);
+    Serial.print("\t");
+    Serial.println(v);
+}
+
+int getVolume()
+{
+    const int SAMPLING_SIZE = 5;
+    int min = 0;
+    int max = 0;
+    int sum = 0;
+    for (int i=0; i<SAMPLING_SIZE; i++) {
+        int tmp = analogRead(ANALOG_PIN);
+        sum += tmp;
+        if (min > tmp || min == 0) {
+            min = tmp;
+        }
+        if (max < tmp || max == 0) {
+            max = tmp;
+        }
+    }
+    return (sum - max - min) / (SAMPLING_SIZE - 2);
+}
+
+int getMaxVolume(int ms, int existingMaxVolume)
+{
+    int maxVolume = existingMaxVolume;
+    int times = ms * 3.661; // Set numerical value by actual measurement
+    for (int i=0; i<times; i++) {
+        int v = getVolume();
+        if (v > maxVolume) {
+            maxVolume = v;
+        }
+    }
+    return maxVolume;
+}
+
 void setup()
 {
+    pinMode(LED_PIN, OUTPUT);
+
     Serial.begin(115200);
-    Log::Info("Hello ESP32 World!");
+    Log::Info("esp32 sound sensor");
     reconnectWifi();
 
-    dht.setup(DHT_PIN, DHTesp::DHT11);
     ambient.begin(AMBIENT_CHANNEL_ID, AMBIENT_WRITE_KEY, &client);
 }
 
 void loop()
 {
+    int maxVolume = 0;
     digitalWrite(LED_PIN, HIGH);
-    delay(NORMAL_INTERVAL_MS);
+    maxVolume = getMaxVolume(NORMAL_INTERVAL_MS, maxVolume);
     digitalWrite(LED_PIN, LOW);
-    delay(NORMAL_INTERVAL_MS);
+    maxVolume = getMaxVolume(NORMAL_INTERVAL_MS, maxVolume);
 
-    TempAndHumidity newValues = dht.getTempAndHumidity();
-    if (dht.getStatus() != 0) {
-        Serial.println("DHT11 error status: " + String(dht.getStatusString()));
-    }
-    float temp = newValues.temperature;
-    float hemi = newValues.humidity;
-    String msg = String(temp) + String(" ") + String(hemi);
+    maxVolume = getMaxVolume(LOW_INTERVAL_MS, maxVolume);
+
+    double t = micros();
+    String msg = String(t/1000000) + String("\t") + String(maxVolume);
     Log::Info(msg.c_str());
-    ambient.set(1, temp);
-    ambient.set(2, hemi);
+    ambient.set(7, maxVolume);
     ambient.send();
-    delay(LOW_INTERVAL_MS);
 }
