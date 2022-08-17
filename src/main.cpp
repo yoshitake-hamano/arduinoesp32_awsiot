@@ -11,7 +11,7 @@ const int ANALOG_PIN = 34;
 
 const int HIGH_INTERVAL_MS   = 250;
 const int NORMAL_INTERVAL_MS = 500;
-const int LOW_INTERVAL_MS    = 60000;
+const int LOW_INTERVAL_MS    = 300000;
 
 WiFiClient client;
 Ambient ambient;
