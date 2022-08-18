@@ -1,6 +1,6 @@
 SRC_DIR:=src
 BUILD_DIR:=images
-TARGETS:=$(BUILD_DIR)/summary.svg
+TARGETS:=$(BUILD_DIR)/summary.png
 
 all: $(TARGETS)
 
@@ -8,6 +8,6 @@ all: $(TARGETS)
 clean:
 	$(RM) $(TARGETS)
 
-$(BUILD_DIR)/%.svg: $(SRC_DIR)/%.puml
-	plantuml -Tsvg -o ../$(BUILD_DIR) $^
+$(BUILD_DIR)/%.png: $(SRC_DIR)/%.puml
+	plantuml -Tpng -o ../$(BUILD_DIR) $^
 
