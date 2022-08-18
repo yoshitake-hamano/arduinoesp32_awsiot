@@ -60,7 +60,7 @@ https://github.com/yoshitake-hamano/arduinoesp32_awsiot/slide
 
 * 全体構成
 
-.image images/summary.svg 0 700
+.image images/summary.png 0 700
 
 ガジェット
 
@@ -75,7 +75,7 @@ Arduino IDE, PlatformIO IDEなどで開発可能。
 
 * 全体構成
 
-.image images/summary.svg 0 700
+.image images/summary.png 0 700
 
 Ambient
 [[https://ambidata.io/]]
@@ -84,7 +84,7 @@ IoTクラウドサービス。簡単なステップでデータを送信し、�
 
 * ESP32開発基板の開発環境
 
-.image images/summary.svg 0 700
+.image images/summary.png 0 700
 
 PlatformIOを採用
 
@@ -93,7 +93,7 @@ PlatformIOを採用
 
 * 躓いた点
 
-.image images/summary.svg 0 700
+.image images/summary.png 0 700
 
 - たまに音声センサーにノイズが乗る→5回サンプリングして最大値/最小値を除去
 - 音声センサーに高頻度アクセス必要→タスク化
