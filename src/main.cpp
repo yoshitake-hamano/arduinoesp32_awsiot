@@ -6,15 +6,18 @@
 #include "Config.h"
 
 const int LED_PIN = 2;
-
 const int ANALOG_PIN = 34;
+const int AMBIENT_VOLUME_FIELD = 7;
 
-const int HIGH_INTERVAL_MS   = 250;
-const int NORMAL_INTERVAL_MS = 500;
-const int LOW_INTERVAL_MS    = 300000;
+const int HIGH_INTERVAL_MS         = 250;
+const int NORMAL_INTERVAL_MS       = 500;
+const int SEND_AMBIENT_INTERVAL_MS = 300000;
+const int RESTART_INTERVAL_MS      = 60000;
 
-WiFiClient client;
-Ambient ambient;
+WiFiClient gClient;
+Ambient gAmbient;
+
+volatile int gMaxVolume;
 
 static void showConnectingWifi()
 {
@@ -27,6 +30,7 @@ static void showConnectingWifi()
 static void reconnectWifi()
 {
     // If forget mode(WIFI_STA), mode might be WIFI_AP_STA.
+    WiFi.disconnect(true,true);
     WiFi.mode(WIFI_STA);
     WiFi.begin(SSID, PASS);
 
@@ -49,9 +53,13 @@ static void reconnectWifi()
 void printVolume(int v)
 {
     double t = micros();
-    Serial.print(t/1000000);
-    Serial.print("\t");
-    Serial.println(v);
+
+    // Serial.print(t/1000000);
+    // Serial.print("\t");
+    // Serial.println(v);
+
+    String msg = String(t/1000000) + String("\t") + String(v);
+    Log::Info(msg.c_str());
 }
 
 int getVolume()
@@ -73,17 +81,33 @@ int getVolume()
     return (sum - max - min) / (SAMPLING_SIZE - 2);
 }
 
-int getMaxVolume(int ms, int existingMaxVolume)
+void resetMaxVolume()
 {
-    int maxVolume = existingMaxVolume;
-    int times = ms * 3.661; // Set numerical value by actual measurement
-    for (int i=0; i<times; i++) {
+    gMaxVolume = 0;
+}
+
+int getMaxVolume()
+{
+    return gMaxVolume;
+}
+
+void taskUpdateVolume(void *pv)
+{
+    resetMaxVolume();
+    while (1) {
         int v = getVolume();
-        if (v > maxVolume) {
-            maxVolume = v;
+        if (v > gMaxVolume) {
+            gMaxVolume = v;
         }
+        delay(10);
     }
-    return maxVolume;
+}
+
+void restartSystem()
+{
+    Log::Error("going to die...");
+    delay(RESTART_INTERVAL_MS);
+    ESP.restart();
 }
 
 void setup()
@@ -94,22 +118,38 @@ void setup()
     Log::Info("esp32 sound sensor");
     reconnectWifi();
 
-    ambient.begin(AMBIENT_CHANNEL_ID, AMBIENT_WRITE_KEY, &client);
+    gAmbient.begin(AMBIENT_CHANNEL_ID, AMBIENT_WRITE_KEY, &gClient);
+
+    int volume = getVolume();
+    printVolume(volume);
+
+    gAmbient.set(AMBIENT_VOLUME_FIELD, volume);
+    if (!gAmbient.send()) {
+        Log::Error("send error: send to ambient #1");
+        restartSystem();
+    }
+
+    xTaskCreateUniversal(
+        taskUpdateVolume, "taskUpdateVolume",
+        1024, NULL, 1, NULL, APP_CPU_NUM);
 }
 
 void loop()
 {
-    int maxVolume = 0;
-    digitalWrite(LED_PIN, HIGH);
-    maxVolume = getMaxVolume(NORMAL_INTERVAL_MS, maxVolume);
-    digitalWrite(LED_PIN, LOW);
-    maxVolume = getMaxVolume(NORMAL_INTERVAL_MS, maxVolume);
+    resetMaxVolume();
+    int maxTimes = SEND_AMBIENT_INTERVAL_MS / (NORMAL_INTERVAL_MS * 2);
+    for (int i=0; i<maxTimes; i++) {
+        digitalWrite(LED_PIN, HIGH);
+        delay(NORMAL_INTERVAL_MS);
+        digitalWrite(LED_PIN, LOW);
+        delay(NORMAL_INTERVAL_MS);
+    }
+    int maxVolume = getMaxVolume();
+    printVolume(maxVolume);
 
-    maxVolume = getMaxVolume(LOW_INTERVAL_MS, maxVolume);
-
-    double t = micros();
-    String msg = String(t/1000000) + String("\t") + String(maxVolume);
-    Log::Info(msg.c_str());
-    ambient.set(7, maxVolume);
-    ambient.send();
+    gAmbient.set(AMBIENT_VOLUME_FIELD, maxVolume);
+    if (!gAmbient.send()) {
+        Log::Error("send error: send to ambient");
+        restartSystem();
+    }
 }
