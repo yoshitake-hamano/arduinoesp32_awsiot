@@ -1,0 +1,12 @@
+@startuml
+card ガジェット {
+card KY03 as "音声センサー
+KKHMF KY-03"
+card ESP32 as "ESP32開発基板"
+}
+card Ambient
+card Mac
+KY03 -> ESP32 : ADC
+ESP32 -> Ambient : http
+Ambient -> Mac : csv
+@enduml

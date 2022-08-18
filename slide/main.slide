@@ -1,0 +1,119 @@
+Let's 自宅ハック
+
+2022/8/19
+
+
+浜野義丈
+
+
+https://github.com/yoshitake-hamano/arduinoesp32_awsiot/slide
+
+* 経緯1
+
+- 2010年：組み込み開発の重要性に気づく
+- 2010年：第一子誕生。子供のおもちゃ作りで電子工作開始。
+- 2013年：TVリモコンに反応するLEDカボチャ作成
+- 2015年：Kindle x Raspberry pi = Note PC作成
+- 2016年：プラレールハック
+- 2016年：自作基板発注
+
+.image images/hist1.jpg 0 700
+
+* 経緯2
+
+- 2016年：Maker Faire Tokyo出展(3D LED cube)
+- 2017年：横浜ガジェット祭り出展(ミニ四駆)
+- 2017年：GUGEN出展(天気に寄りそう時計 Weather hour)
+- 2018年：Maker Faire Tokyo出展(ミニ四駆)
+- 2018年：One Japan Hackathon出展(ゆでたまご)
+- 2018年：横浜ガジェット祭り出展(ミニ四駆)
+- 2019年：横浜ガジェット祭り出展(ミニ四駆)
+
+.image images/hist2.jpg 0 700
+
+* 発端(2021年)
+
+自宅（3階建て）は、部屋によって温度が違う。
+実際のところどれぐらい違うのか？が気になった。
+
+* 発端(2021年)：実施事項
+
+- マイコン開発：1F/2F/3Fの部屋で温度をセンシング(ESP32 + DHT11)
+.image images/temperature_micom.jpg 0 300
+- スクレイピング：くらしTEPCO(Web)から使用電力取得(スマートメーターなら可能)
+
+* 発端(2021年)：分かったこと(当たり前)
+
+.image images/temperature.png 0 500
+
+- 3Fは39度まで上がる
+- 1Fと3Fは7度近く違う
+- エアコンをつけると温度が下がる＆電力消費が上がる
+
+* 発端(2022年夏)
+
+音量も分かると何か分かる？
+
+* 全体構成
+
+.image images/sound_micom.jpg 0 400
+
+* 全体構成
+
+.image images/summary.svg 0 700
+
+ガジェット
+
+□マイコン：KKHMF ESP32開発ボード
+[[https://www.amazon.co.jp/gp/product/B077ZSPKLZ]]
+900円/1個程度。WiFiを繋げられるマイコン。技適取得済。
+Arduino IDE, PlatformIO IDEなどで開発可能。
+
+□音声センサー：KKHMF KY-03
+[[https://www.amazon.co.jp/gp/product/B08L94NRGW]]
+160円/1個程度。ESP32にはADCで接続する。
+
+* 全体構成
+
+.image images/summary.svg 0 700
+
+Ambient
+[[https://ambidata.io/]]
+IoTクラウドサービス。簡単なステップでデータを送信し、可視化できる。
+8chまで無料で使用可能。
+
+* ESP32開発基板の開発環境
+
+.image images/summary.svg 0 700
+
+PlatformIOを採用
+
+- CUIでビルドするので、emacsでエディット可能
+- マルチプラットフォーム
+
+* 躓いた点
+
+.image images/summary.svg 0 700
+
+- たまに音声センサーにノイズが乗る→5回サンプリングして最大値/最小値を除去
+- 音声センサーに高頻度アクセス必要→タスク化
+- マイコンが3時間稼働あたりで停止した→自動リセット機能追加
+
+* 分かったこと＆今後に向けて
+
+.image images/temperature_sound.png 0 400
+
+分かったこと
+
+- 人がいることが分かりそう
+
+今後に向けて
+
+- 音が大きくなったら、何かを通知する機能をつけたい
+- 温度・使用電力・音を組み合わせるた何かを考える
+
+*
+
+Let's 自宅ハック
+
+.image images/yeah.png
